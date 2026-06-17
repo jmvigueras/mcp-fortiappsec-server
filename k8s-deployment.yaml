@@ -1,0 +1,56 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mcp-fortiappsec-server
+  labels:
+    app: mcp-fortiappsec-server
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mcp-fortiappsec-server
+  template:
+    metadata:
+      labels:
+        app: mcp-fortiappsec-server
+    spec:
+      containers:
+        - name: mcp-fortiappsec-server
+          image: jviguerasfortinet/mcp-fortiappsec-server:v1.0.0
+          ports:
+            - containerPort: 8000
+          env:
+            - name: PYTHONUNBUFFERED
+              value: "1"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 10
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "256Mi"
+              cpu: "500m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mcp-fortiappsec-server
+spec:
+  type: NodePort
+  selector:
+    app: mcp-fortiappsec-server
+  ports:
+    - port: 8000
+      targetPort: 8000
+      nodePort: 30082
