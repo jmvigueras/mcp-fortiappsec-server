@@ -7,6 +7,7 @@ Run with:
 
 import json
 import logging
+import os
 from contextlib import asynccontextmanager
 from typing import List, Optional
 
@@ -23,6 +24,26 @@ logger = logging.getLogger(__name__)
 
 # Create MCP server
 mcp = FastMCP("FortiAppSec MCP Server")
+
+# Environment variable for API key
+ENV_API_KEY = "FORTINET_APPSEC_API_KEY"
+
+
+def _resolve_api_key(appsec_api_key: str = "") -> str:
+    """Resolve API key from parameter or environment variable.
+
+    Priority: explicit parameter > environment variable.
+    Raises ValueError if no key is available.
+    """
+    key = appsec_api_key.strip() if appsec_api_key else ""
+    if not key:
+        key = os.environ.get(ENV_API_KEY, "").strip()
+    if not key:
+        raise ValueError(
+            "API key is required. Pass appsec_api_key parameter or set "
+            "FORTINET_APPSEC_API_KEY environment variable."
+        )
+    return key
 
 
 # ===============================
@@ -42,29 +63,31 @@ async def health_check(request):
 
 @mcp.tool()
 def waf_list_applications(
-    appsec_api_key: str,
+    appsec_api_key: str = "",
 ) -> str:
     """List all WAF applications in FortiAppSec.
 
     Args:
-        appsec_api_key: FortiAppSec API key for authentication
+        appsec_api_key: FortiAppSec API key (optional if FORTINET_APPSEC_API_KEY env var is set)
     """
-    result = FortiAppSecTools.list_waf_applications(appsec_api_key)
+    api_key = _resolve_api_key(appsec_api_key)
+    result = FortiAppSecTools.list_waf_applications(api_key)
     return json.dumps(result, indent=2)
 
 
 @mcp.tool()
 def waf_get_application(
     app_id: str,
-    appsec_api_key: str,
+    appsec_api_key: str = "",
 ) -> str:
     """Get details of a specific WAF application in FortiAppSec.
 
     Args:
         app_id: Application ID to retrieve
-        appsec_api_key: FortiAppSec API key for authentication
+        appsec_api_key: FortiAppSec API key (optional if FORTINET_APPSEC_API_KEY env var is set)
     """
-    result = FortiAppSecTools.get_waf_application(appsec_api_key, app_id)
+    api_key = _resolve_api_key(appsec_api_key)
+    result = FortiAppSecTools.get_waf_application(api_key, app_id)
     return json.dumps(result, indent=2)
 
 
@@ -73,7 +96,7 @@ def waf_create_application(
     app_name: str,
     domain_name: str,
     server_address: str,
-    appsec_api_key: str,
+    appsec_api_key: str = "",
     server_port: int = 80,
     extra_domains: str = "",
     custom_port_http: int = 80,
@@ -95,7 +118,7 @@ def waf_create_application(
         app_name: Application name
         domain_name: Primary domain name (e.g., myapp.example.com)
         server_address: Backend server address/DNS name
-        appsec_api_key: FortiAppSec API key for authentication
+        appsec_api_key: FortiAppSec API key (optional if FORTINET_APPSEC_API_KEY env var is set)
         server_port: Backend server port (default: 80)
         extra_domains: Additional domains (comma-separated, empty for none)
         custom_port_http: HTTP listening port (default: 80)
@@ -111,12 +134,15 @@ def waf_create_application(
         head_status_code: Expected health check status code (default: 404)
         template_id: Template ID for the application
     """
+    # Resolve API key
+    api_key = _resolve_api_key(appsec_api_key)
+
     # Convert comma-separated strings to lists
     extra_domains_list = [d.strip() for d in extra_domains.split(",") if d.strip()] if extra_domains else []
     service_list = [s.strip() for s in service.split(",") if s.strip()]
 
     result = FortiAppSecTools.create_waf_application(
-        api_key=appsec_api_key,
+        api_key=api_key,
         app_name=app_name,
         domain_name=domain_name,
         server_address=server_address,
@@ -141,15 +167,16 @@ def waf_create_application(
 @mcp.tool()
 def waf_delete_application(
     app_id: str,
-    appsec_api_key: str,
+    appsec_api_key: str = "",
 ) -> str:
     """Delete a WAF application from FortiAppSec.
 
     Args:
         app_id: Application ID to delete
-        appsec_api_key: FortiAppSec API key for authentication
+        appsec_api_key: FortiAppSec API key (optional if FORTINET_APPSEC_API_KEY env var is set)
     """
-    result = FortiAppSecTools.delete_waf_application(appsec_api_key, app_id)
+    api_key = _resolve_api_key(appsec_api_key)
+    result = FortiAppSecTools.delete_waf_application(api_key, app_id)
     return json.dumps(result, indent=2)
 
 
@@ -160,14 +187,15 @@ def waf_delete_application(
 
 @mcp.tool()
 def waf_list_templates(
-    appsec_api_key: str,
+    appsec_api_key: str = "",
 ) -> str:
     """List WAF templates available in FortiAppSec.
 
     Args:
-        appsec_api_key: FortiAppSec API key for authentication
+        appsec_api_key: FortiAppSec API key (optional if FORTINET_APPSEC_API_KEY env var is set)
     """
-    result = FortiAppSecTools.list_waf_templates(appsec_api_key)
+    api_key = _resolve_api_key(appsec_api_key)
+    result = FortiAppSecTools.list_waf_templates(api_key)
     return json.dumps(result, indent=2)
 
 

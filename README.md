@@ -12,7 +12,7 @@ MCP server for managing Fortinet FortiAppSec (WAF as a Service) via AI agents. B
 | `waf_delete_application` | Delete a WAF application |
 | `waf_list_templates` | List available WAF templates |
 
-Every tool requires `appsec_api_key` as a parameter. The server is stateless — it doesn't store credentials.
+Every tool accepts an optional `appsec_api_key` parameter. If not provided, the server reads from the `FORTINET_APPSEC_API_KEY` environment variable. Per-call parameter overrides the environment variable.
 
 ## Connect from Claude Desktop
 
@@ -93,12 +93,13 @@ curl -s -X POST https://mcp-fortiappsec.fortidemoscloud.com/mcp \
 ## Run locally
 
 ```bash
-# Docker
+# Docker (with API key from environment)
+export FORTINET_APPSEC_API_KEY="your_api_key_here"
 docker-compose up --build -d
 
 # Or directly
 uv sync
-uv run uvicorn app.server:app --host 0.0.0.0 --port 8000
+FORTINET_APPSEC_API_KEY="your_api_key_here" uv run uvicorn app.server:app --host 0.0.0.0 --port 8000
 ```
 
 Server available at `http://localhost:8000/mcp` with health check at `/health`.
@@ -120,7 +121,7 @@ Exposes on NodePort 30082. Image: `jviguerasfortinet/mcp-fortiappsec-server:v1.0
 | `app_name` | Yes | — | Application name |
 | `domain_name` | Yes | — | Primary domain name |
 | `server_address` | Yes | — | Backend server address |
-| `appsec_api_key` | Yes | — | FortiAppSec API key |
+| `appsec_api_key` | No | "" | FortiAppSec API key (uses env var if not provided) |
 | `server_port` | No | 80 | Backend server port |
 | `extra_domains` | No | "" | Additional domains (comma-separated) |
 | `custom_port_http` | No | 80 | HTTP listening port |
@@ -138,14 +139,14 @@ Exposes on NodePort 30082. Image: `jviguerasfortinet/mcp-fortiappsec-server:v1.0
 
 | Parameter | Required | Description |
 |-----------|----------|-------------|
-| `appsec_api_key` | Yes | FortiAppSec API key |
+| `appsec_api_key` | No | FortiAppSec API key (uses `FORTINET_APPSEC_API_KEY` env var if not provided) |
 
 ### waf_get_application / waf_delete_application
 
 | Parameter | Required | Description |
 |-----------|----------|-------------|
 | `app_id` | Yes | Application ID |
-| `appsec_api_key` | Yes | FortiAppSec API key |
+| `appsec_api_key` | No | FortiAppSec API key (uses `FORTINET_APPSEC_API_KEY` env var if not provided) |
 
 ## License
 
